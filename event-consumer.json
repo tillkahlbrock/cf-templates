@@ -66,6 +66,19 @@
             }
         },
 
+        "WaitHandle" : {
+            "Type" : "AWS::CloudFormation::WaitConditionHandle"
+        },
+
+        "WaitCondition" : {
+            "Type" : "AWS::CloudFormation::WaitCondition",
+            "DependsOn" : "EventConsumer",
+            "Properties" : {
+                "Handle" : {"Ref" : "WaitHandle"},
+                "Timeout" : "300"
+            }
+        },
+
         "InstanceSecurityGroup": {
             "Type": "AWS::EC2::SecurityGroup",
             "Properties": {
