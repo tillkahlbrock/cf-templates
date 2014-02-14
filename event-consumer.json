@@ -40,8 +40,7 @@
                 "SecurityGroups": [ { "Ref": "InstanceSecurityGroup" } ],
                 "ImageId": {
                     "Fn::FindInMap": [ "RegionMap", { "Ref": "AWS::Region" }, "AMI" ]
-                },
-                "UserData": { }
+                }
             }
         },
 
