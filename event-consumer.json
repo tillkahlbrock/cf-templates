@@ -20,16 +20,13 @@
 
     "Resources": {
 
-        "Ec2Instance": {
+        "EventConsumer": {
             "Type": "AWS::EC2::Instance",
             "Metadata": {
                 "AWS::CloudFormation::Init": {
                     "config": {
                         "packages": {
-                            "yum": {
-                                "php": [],
-                                "php-cli": []
-                            }
+                            "yum": { "php": [] }
                         }
                     }
                 }
@@ -37,6 +34,31 @@
 
             "Properties": {
                 "KeyName": { "Ref": "KeyName" },
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": [
+                            "",
+                            [
+                                "#!/bin/bash -v\n",
+                                "yum update -y aws-cfn-bootstrap\n",
+
+                                "# Helper function\n",
+                                "function error_exit\n",
+                                "{\n",
+                                "  /opt/aws/bin/cfn-signal -e 0 -r \"$1\" '", { "Ref" : "WaitHandle" }, "'\n",
+                                "  exit 1\n",
+                                "}\n",
+
+                                "# Install PHP\n",
+                                "/opt/aws/bin/cfn-init -s ", { "Ref" : "AWS::StackId" }, " -r EventConsumer ",
+                                "    --region ", { "Ref" : "AWS::Region" }, " || error_exit 'Failed to run cfn-init'\n",
+
+                                "# All is well so signal success\n",
+                                "/opt/aws/bin/cfn-signal -e 0 -r \"EventConsumer setup complete\" '", { "Ref" : "WaitHandle" }, "'\n"
+                            ]
+                        ]
+                    }
+                },
                 "SecurityGroups": [ { "Ref": "InstanceSecurityGroup" } ],
                 "ImageId": {
                     "Fn::FindInMap": [ "RegionMap", { "Ref": "AWS::Region" }, "AMI" ]
