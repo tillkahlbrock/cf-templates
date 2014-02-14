@@ -1,0 +1,80 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+
+    "Description": "Template for a simple SNS / SQS ",
+
+    "Resources": {
+
+        "SQSQueue": {
+            "Type": "AWS::SQS::Queue",
+            "Properties": {
+                "QueueName": "DomainEvents"
+            }
+        },
+
+        "SNSTopic": {
+            "Type": "AWS::SNS::Topic",
+            "Properties": {
+                "TopicName": "DomainEventsTopic",
+                "Subscription": [
+                    {
+                        "Protocol": "sqs",
+                        "Endpoint": {
+                            "Fn::GetAtt": [ "SQSQueue", "Arn" ]
+                        }
+                    }
+                ]
+            }
+        },
+
+        "AllowSNS2SQSPolicy": {
+            "Type": "AWS::SQS::QueuePolicy",
+            "Properties": {
+                "Queues": [
+                    {
+                        "Ref": "SQSQueue"
+                    }
+                ],
+                "PolicyDocument": {
+                    "Version": "2008-10-17",
+                    "Id": "PublicationPolicy",
+                    "Statement": [
+                        {
+                            "Sid": "Allow-SNS-SendMessage",
+                            "Effect": "Allow",
+                            "Principal": {
+                                "AWS": "*"
+                            },
+                            "Action": ["SQS:SendMessage"],
+                            "Resource": {
+                                "Fn::GetAtt": [ "SQSQueue", "Arn" ]
+                            },
+                            "Condition": {
+                                "ArnEquals": {
+                                    "aws:SourceArn": {
+                                        "Ref": "SNSTopic"
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    },
+
+    "Outputs": {
+        "QueueArn": {
+            "Value": {
+                "Fn::GetAtt": [ "SQSQueue", "Arn" ]
+            },
+            "Description": "ARN of SQS Queue"
+        },
+        "TopicArn": {
+            "Value": {
+                "Ref": "SNSTopic"
+            },
+            "Description": "ARN of SNS Topic"
+        }
+    }
+}
