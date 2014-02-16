@@ -27,6 +27,11 @@
                     "config": {
                         "packages": {
                             "yum": { "php": [] }
+                        },
+                        "files" : {
+                            "/etc/supervisor.d/event-consumer.conf" : {
+                                "source": "https://raw.github.com/tillkahlbrock/event-consumer/master/supervisor/event-consumer.conf"
+                            }
                         }
                     }
                 }
@@ -49,9 +54,15 @@
                                 "  exit 1\n",
                                 "}\n",
 
-                                "# Install PHP\n",
+                                "# Install packages\n",
                                 "/opt/aws/bin/cfn-init -s ", { "Ref" : "AWS::StackId" }, " -r EventConsumer ",
                                 "    --region ", { "Ref" : "AWS::Region" }, " || error_exit 'Failed to run cfn-init'\n",
+
+                                "# Install supervisord\n",
+                                "/usr/bin/easy_install supervisor",
+
+                                "# Start EventConsumer\n",
+                                "/usr/bin/supervisord -c /etc/supervisor.d/event-consumer.conf",
 
                                 "# All is well so signal success\n",
                                 "/opt/aws/bin/cfn-signal -e 0 -r \"EventConsumer setup complete\" '", { "Ref" : "WaitHandle" }, "'\n"
